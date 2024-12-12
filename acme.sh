@@ -31,6 +31,18 @@ fi
 # 设置环境变量
 export PATH="~/.acme.sh:$PATH"
 
+# 注册账号
+read -p "请输入您的邮箱地址用于注册acme.sh账号（例如jk@jsai.com）：" EMAIL
+if [ -z "$EMAIL" ]; then
+    echo "邮箱地址不能为空，请重新运行脚本。"
+    exit 1
+fi
+~/.acme.sh/acme.sh --register-account -m "$EMAIL"
+if [ $? -ne 0 ]; then
+    echo "账号注册失败，请检查邮箱地址是否正确。"
+    exit 1
+fi
+
 # 输入域名
 read -p "请输入您的域名（例如example.com）：" DOMAIN
 if [ -z "$DOMAIN" ]; then
