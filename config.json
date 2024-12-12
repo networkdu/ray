@@ -1,0 +1,95 @@
+{
+  "log": {
+    "access": "/var/log/v2ray/access.log",
+    "error": "/var/log/v2ray/error.log",
+    "loglevel": "warning"
+  },
+  "inbounds": [
+    {
+      "port": 55555,
+      "listen": "127.0.0.1",
+      "protocol": "vmess",
+      "settings": {
+        "clients": [{ "id": "71cef7eb-63a4-4943-da54-fbc193a7b64b", "alterId": 0 }]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": { "path": "/71cef7eb-63a4-4943-da54-fbc193a7b64b" }
+      }
+    },
+    {
+      "port": 55556,
+      "listen": "127.0.0.1",
+      "protocol": "vmess",
+      "settings": {
+        "clients": [{ "id": "8a1da056-0e1e-499f-c1d7-51b76d39102a", "alterId": 0 }]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": { "path": "/8a1da056-0e1e-499f-c1d7-51b76d39102a" }
+      }
+    },
+    {
+      "port": 12345,
+      "listen": "127.0.0.1",
+      "protocol": "trojan",
+      "settings": { "clients": [{ "password": "kkbox" }] },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": { "path": "/trojan886" }
+      }
+    },
+    {
+      "port": 3000,
+      "listen": "127.0.0.1",
+      "protocol": "shadowsocks",
+      "settings": {
+        "method": "none",
+        "password": "ustestbbqq"
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/onlyyou"
+        }
+      }
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 11111,
+      "protocol": "vless",
+      "settings": {
+        "clients": [{ "id": "fffaf65d-db53-498e-88c8-7ee6d1a8cc84", "level": 0 }],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": { "path": "/onlytest" }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {}
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "outboundTag": "direct",
+        "domain": [
+          "geosite:netflix",
+          "geosite:youtube",
+          "geosite:telegram",
+          "domain:ip.sb",
+          "domain:ftp.usmirror.site",
+          "domain:ipinfo.io",
+          "domain:ipify.org"
+        ]
+      }
+    ]
+  }
+}
