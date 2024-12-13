@@ -21,9 +21,9 @@ V2RAY_ERROR_LOG="$V2RAY_LOG_DIR/error.log"
 install_dependencies() {
     echo "检查并安装必要依赖..."
     if [ -f /etc/debian_version ]; then
-        apt update -y && apt install -y curl socat nginx unzip wget
+        apt update -y && apt install -y curl socat  unzip wget
     elif [ -f /etc/redhat-release ]; then
-        yum update -y && yum install -y curl socat epel-release nginx unzip wget
+        yum update -y && yum install -y curl socat epel-release  unzip wget
     else
         echo "不支持的操作系统，请手动安装依赖后再运行此脚本。"
         exit 1
@@ -44,34 +44,45 @@ close_port_80() {
 }
 
 # 安装 acme.sh 并申请证书
+# 修改后的 ACME 安装及证书申请逻辑
 install_acme() {
     echo "安装 acme.sh..."
-    if [ ! -f "$ACME_SH_PATH/acme.sh" ]; then
+    ACME_SH_BIN="$HOME/.acme.sh/acme.sh"
+    if [ ! -f "$ACME_SH_BIN" ]; then
         curl https://get.acme.sh | sh
     fi
-    export PATH="$ACME_SH_PATH:$PATH"
+
+    if [ ! -f "$ACME_SH_BIN" ]; then
+        echo "acme.sh 安装失败，请检查网络连接或手动安装 acme.sh 后重试。"
+        exit 1
+    fi
+
+    export PATH="$HOME/.acme.sh:$PATH"
 
     echo "请确保您的域名已解析到当前主机的 IP 地址。"
-    read -p "请输入您的邮箱地址用于注册 acme.sh 账号（默认: admin@example.com）：" EMAIL
+    read -p "请输入您的邮箱地址用于注册 acme.sh 账号（默认: admin@example.com）： " EMAIL
     EMAIL=${EMAIL:-admin@example.com}
-    $ACME_SH_PATH/acme.sh --register-account -m "$EMAIL"
+    $ACME_SH_BIN --register-account -m "$EMAIL"
 
-    read -p "请输入您的域名（默认: example.com）：" DOMAIN
+    read -p "请输入您的域名（默认: example.com）： " DOMAIN
     DOMAIN=${DOMAIN:-example.com}
 
     close_port_80
 
-    $ACME_SH_PATH/acme.sh --issue -d "$DOMAIN" --standalone
+    $ACME_SH_BIN --issue -d "$DOMAIN" --standalone
     if [ $? -ne 0 ]; then
-        echo "证书签发失败，请检查域名解析或防火墙设置。"
+        echo "证书签发失败！可能的原因包括："
+        echo "1. 域名未正确解析到当前主机 IP。"
+        echo "2. 防火墙或安全组阻止了 80 端口访问。"
+        echo "3. 输入的域名有误。"
         exit 1
     fi
 
-    read -p "请输入证书保存目录（默认: /mnt）：" CERT_PATH
+    read -p "请输入证书保存目录（默认: /mnt）： " CERT_PATH
     CERT_PATH=${CERT_PATH:-/mnt}
     mkdir -p "$CERT_PATH"
 
-    $ACME_SH_PATH/acme.sh --installcert -d "$DOMAIN" \
+    $ACME_SH_BIN --installcert -d "$DOMAIN" \
         --key-file "$CERT_PATH/1.key" \
         --fullchain-file "$CERT_PATH/1.crt"
     if [ $? -eq 0 ]; then
@@ -81,6 +92,7 @@ install_acme() {
         exit 1
     fi
 }
+
 
 # 安装并配置 Nginx
 install_nginx() {
