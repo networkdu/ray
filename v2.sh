@@ -96,6 +96,7 @@ install_acme() {
 
 # 安装并配置 Nginx
 install_nginx() {
+   apt install ngnix -y 
     echo "安装和配置 Nginx..."
     systemctl start nginx
     systemctl enable nginx
