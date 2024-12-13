@@ -17,6 +17,56 @@ V2RAY_LOG_DIR="/var/log/v2ray"
 V2RAY_ACCESS_LOG="$V2RAY_LOG_DIR/access.log"
 V2RAY_ERROR_LOG="$V2RAY_LOG_DIR/error.log"
 
+tcp_tune() {
+    echo "==>  优化 TCP 设置中..."
+    
+    # 删除现有的 TCP 相关设置
+    sed -i '/net.ipv4.tcp_no_metrics_save/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_frto/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_mtu_probing/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_rfc1337/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_sack/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_fack/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_window_scaling/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_adv_win_scale/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_moderate_rcvbuf/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_rmem/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_wmem/d' /etc/sysctl.conf
+    sed -i '/net.core.rmem_max/d' /etc/sysctl.conf
+    sed -i '/net.core.wmem_max/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.udp_rmem_min/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.udp_wmem_min/d' /etc/sysctl.conf
+    sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
+
+    # 添加新的 TCP 优化设置
+    cat >> /etc/sysctl.conf << EOF
+net.ipv4.tcp_no_metrics_save=1
+net.ipv4.tcp_ecn=0
+net.ipv4.tcp_frto=0
+net.ipv4.tcp_mtu_probing=0
+net.ipv4.tcp_rfc1337=1
+net.ipv4.tcp_sack=1
+net.ipv4.tcp_fack=1
+net.ipv4.tcp_window_scaling=2
+net.ipv4.tcp_adv_win_scale=2
+net.ipv4.tcp_moderate_rcvbuf=1
+net.ipv4.tcp_rmem=4096 65536 37331520
+net.ipv4.tcp_wmem=4096 65536 37331520
+net.core.rmem_max=37331520
+net.core.wmem_max=37331520
+net.ipv4.udp_rmem_min=8192
+net.ipv4.udp_wmem_min=8192
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+EOF
+
+    # 应用系统配置
+    sysctl -p && sysctl --system
+    echo "TCP 设置已优化。"
+}
+tcp_tune
 # 通用安装依赖
 install_dependencies() {
     echo "检查并安装必要依赖..."
