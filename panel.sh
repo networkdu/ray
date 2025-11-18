@@ -116,5 +116,5 @@ echo
 echo "🎉 部署完成！以下是服务管理命令："
 echo "▶ 查看服务状态： systemctl status v2panel"
 echo "▶ 查看服务日志： journalctl -fu v2panel"
-echo "▶ 测试访问地址： http://127.0.0.1:5000"
+echo "▶ 测试访问地址： http://127.0.0.1:9000"
 echo
