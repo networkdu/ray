@@ -1,24 +1,28 @@
 #!/bin/bash
-
 # 一键部署 V2Ray 服务脚本
 # 请确保运行该脚本的用户具备 root 权限
 
-# 定义变量
-DOWNLOAD_URL="https://github.com/networkdu/qb439/raw/refs/heads/main/v2ray-linux-64.zip"  # 替换为实际 URL
-DOWNLOAD_DIR="/tmp"                                       # 临时下载目录
-INSTALL_DIR="/usr/local/bin/v2ray"                        # 安装目录
-SERVICE_FILE="/etc/systemd/system/v2ray.service"          # systemd 服务文件路径
-LOG_DIR="/var/log/v2ray"                                  # 日志目录
-ACCESS_LOG="$LOG_DIR/access.log"                          # 访问日志文件
-ERROR_LOG="$LOG_DIR/error.log"                            # 错误日志文件
+# ================== 基本变量 ==================
+# 主下载地址（GitHub）
+PRIMARY_URL="https://github.com/networkdu/qb439/raw/refs/heads/main/v2ray-linux-64.zip"
+
+# 备用下载地址（R2，IPv6 环境友好）
+BACKUP_URL="https://us.r2.7kb.me/v2ray-linux-64_new.zip"
+
+DOWNLOAD_DIR="/tmp"                         # 临时下载目录
+INSTALL_DIR="/usr/local/bin/v2ray"          # 安装目录
+SERVICE_FILE="/etc/systemd/system/v2ray.service"   # systemd 服务文件路径
+LOG_DIR="/var/log/v2ray"                    # 日志目录
+ACCESS_LOG="$LOG_DIR/access.log"            # 访问日志文件
+ERROR_LOG="$LOG_DIR/error.log"              # 错误日志文件
 
 # 检查操作系统
 OS_NAME=$(cat /etc/*release | grep ^ID= | cut -d= -f2 | tr -d '"')
 
-# 步骤 1: 优化 TCP 设置
+# ================== 函数：优化 TCP 设置 ==================
 tcp_tune() {
-    echo "==>  优化 TCP 设置中..."
-    
+    echo "==> 优化 TCP 设置中..."
+
     # 删除现有的 TCP 相关设置
     sed -i '/net.ipv4.tcp_no_metrics_save/d' /etc/sysctl.conf
     sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.conf
@@ -66,22 +70,26 @@ EOF
     echo "TCP 设置已优化。"
 }
 
-# 步骤 2: 检查并安装所需依赖
+# ================== 步骤 1: 检查并安装依赖 ==================
 echo "==> 步骤 1: 检查并安装所需依赖..."
+
 if [[ "$OS_NAME" == "centos" || "$OS_NAME" == "rhel" ]]; then
     echo "检测到 CentOS 或 RHEL 系统..."
     yum clean all
     yum makecache
     yum update -y
+
     if ! command -v wget &> /dev/null; then
         yum install -y wget
     fi
     if ! command -v unzip &> /dev/null; then
         yum install -y unzip
     fi
+
 elif [[ "$OS_NAME" == "ubuntu" || "$OS_NAME" == "debian" ]]; then
     echo "检测到 Ubuntu 或 Debian 系统..."
     apt update -y
+
     if ! command -v wget &> /dev/null; then
         apt install -y wget
     fi
@@ -93,83 +101,91 @@ else
     exit 1
 fi
 
-# 步骤 2: 创建日志目录和文件
+# ================== 步骤 2: 创建日志目录和文件 ==================
 echo "==> 步骤 2: 创建日志目录和文件..."
-mkdir -p $LOG_DIR
-touch $ACCESS_LOG
-touch $ERROR_LOG
+mkdir -p "$LOG_DIR"
+touch "$ACCESS_LOG"
+touch "$ERROR_LOG"
 
-# 步骤 3: 下载压缩包
+# ================== 步骤 3: 下载 V2Ray 压缩包（含备用源） ==================
 echo "==> 步骤 3: 下载 V2Ray 压缩包..."
-mkdir -p $DOWNLOAD_DIR
-wget -O $DOWNLOAD_DIR/v2ray-deployment.zip $DOWNLOAD_URL
-if [ $? -ne 0 ]; then
-    echo "下载失败，请检查 URL 是否正确。"
-    exit 1
+mkdir -p "$DOWNLOAD_DIR"
+
+download_v2ray() {
+    local url="$1"
+    echo "尝试从：$url 下载..."
+    wget -O "$DOWNLOAD_DIR/v2ray-deployment.zip" "$url"
+}
+
+# 先尝试主下载地址（GitHub）
+if ! download_v2ray "$PRIMARY_URL"; then
+    echo "主下载地址失败，尝试备用下载地址（R2 镜像）..."
+    # 再尝试备用下载地址（IPv6 环境可用）
+    if ! download_v2ray "$BACKUP_URL"; then
+        echo "主地址和备用地址均下载失败，请检查网络或更换下载源。"
+        exit 1
+    fi
 fi
+
 echo "下载完成：$DOWNLOAD_DIR/v2ray-deployment.zip"
 
-# 步骤 4: 解压文件
-echo "==> 步骤 4: 解压文件到临时目录..."
-mkdir -p $INSTALL_DIR
-unzip $DOWNLOAD_DIR/v2ray-deployment.zip -d $INSTALL_DIR
+# ================== 步骤 4: 解压文件 ==================
+echo "==> 步骤 4: 解压文件到安装目录..."
+mkdir -p "$INSTALL_DIR"
+unzip "$DOWNLOAD_DIR/v2ray-deployment.zip" -d "$INSTALL_DIR"
 if [ $? -ne 0 ]; then
     echo "解压失败，请检查压缩包是否有效。"
     exit 1
 fi
 echo "文件已解压到：$INSTALL_DIR"
 
-# 步骤 5: 设置执行权限
+# ================== 步骤 5: 设置执行权限 ==================
 echo "==> 步骤 5: 设置执行权限..."
-chmod +x $INSTALL_DIR/v2ray
+chmod +x "$INSTALL_DIR/v2ray"
 
-# 步骤 6: 配置 systemd 服务
+# ================== 步骤 6: 配置 systemd 服务 ==================
 echo "==> 步骤 6: 配置 V2Ray systemd 服务..."
-cat > $SERVICE_FILE <<EOF
+
+cat > "$SERVICE_FILE" << EOF
 [Unit]
 Description=V2Ray Service
-Documentation=https://www.v2fly.org/
 After=network.target
 
 [Service]
-User=$USER
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
-NoNewPrivileges=true
-ExecStart=$INSTALL_DIR/v2ray run -config $INSTALL_DIR/config.json
+Type=simple
+ExecStart=$INSTALL_DIR/v2ray -config /etc/v2ray/config.json
 Restart=on-failure
-RestartPreventExitStatus=23
+User=root
+LimitNOFILE=65535
+StandardOutput=append:$ACCESS_LOG
+StandardError=append:$ERROR_LOG
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-if [ $? -ne 0 ]; then
-    echo "systemd 服务配置失败。"
-    exit 1
-fi
-echo "systemd 服务文件已配置：$SERVICE_FILE"
-
-# 步骤 7: 启用并启动 V2Ray 服务
+# ================== 步骤 7: 启用并启动 V2Ray 服务 ==================
 echo "==> 步骤 7: 启用并启动 V2Ray 服务..."
 systemctl daemon-reload
 systemctl enable v2ray
 systemctl restart v2ray
+
 if [ $? -ne 0 ]; then
-    echo "V2Ray 服务启动失败，请检查配置。"
+    echo "V2Ray 服务启动失败，请检查配置（/etc/v2ray/config.json）。"
     exit 1
 fi
+
 echo "V2Ray 服务已启动并设置为开机自启。"
 
-# 步骤 8: 检查服务状态
+# ================== 步骤 8: 检查服务状态 ==================
 echo "==> 步骤 8: 检查 V2Ray 服务状态..."
 systemctl status v2ray --no-pager
 
-# 步骤 9: 清理临时文件
+# ================== 步骤 9: 清理临时文件 ==================
 echo "==> 步骤 9: 清理临时文件..."
-rm -f $DOWNLOAD_DIR/v2ray-deployment.zip
+rm -f "$DOWNLOAD_DIR/v2ray-deployment.zip"
 
-# 调用 tcp_tune 函数优化 TCP 设置
+# ================== 步骤 10: 优化 TCP ==================
 tcp_tune
 
 echo "V2Ray 部署完成！"
