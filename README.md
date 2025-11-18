@@ -20,7 +20,7 @@
 ## 🚀 快速部署
 
 ```bash
-curl -fsSL [https://yourdomain.com/deploy.sh](https://raw.githubusercontent.com/networkdu/ray/refs/heads/main/panel.sh) | sudo bash
+curl -fsSL [https://raw.githubusercontent.com/networkdu/ray/refs/heads/main/panel.sh)] |  bash
 ```
 
 或者手动下载安装：
@@ -31,25 +31,7 @@ chmod +x deploy.sh
 sudo ./deploy.sh
 ```
 
-> 请将 `https://yourdomain.com/deploy.sh` 替换为你仓库中 `Raw` 链接。
 
----
-
-## 📂 v2.zip 要求
-
-你需要将完整的 V2Panel 项目打包为 `v2.zip` 并上传到你服务器，例如：
-
-```
-https://yourdomain.com/files/v2.zip
-```
-
-脚本默认从此地址下载并解压到 `/opt/v2panel`，如需修改，请编辑脚本中的：
-
-```bash
-ZIP_URL="https://yourdomain.com/files/v2.zip"
-```
-
----
 
 ## 📦 Python 模块配置（批量处理）
 
@@ -87,7 +69,7 @@ systemctl stop v2panel        # 停止服务
 脚本默认运行 `/opt/v2panel/app.py`，你应确保其中：
 
 ```python
-app.run(host="::", port=5000)  # 可支持 IPv4 + IPv6
+app.run(host="::", port=9000)  # 可支持 IPv4 + IPv6
 ```
 
 如需更改端口，请在 `app.py` 或 systemd 中指定。
