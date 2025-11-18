@@ -20,7 +20,7 @@
 ## 🚀 快速部署
 
 ```bash
-curl -fsSL [https://raw.githubusercontent.com/networkdu/ray/refs/heads/main/panel.sh)] |  bash
+curl -fsSL (https://raw.githubusercontent.com/networkdu/ray/refs/heads/main/panel.sh) |  bash
 ```
 
 或者手动下载安装：
