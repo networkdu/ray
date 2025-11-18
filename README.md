@@ -20,7 +20,7 @@
 ## 🚀 快速部署
 
 ```bash
-curl -fsSL https://yourdomain.com/deploy.sh | sudo bash
+curl -fsSL [https://yourdomain.com/deploy.sh](https://raw.githubusercontent.com/networkdu/ray/refs/heads/main/panel.sh) | sudo bash
 ```
 
 或者手动下载安装：
