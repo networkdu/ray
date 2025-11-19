@@ -63,7 +63,7 @@ fi
 ###############################################
 # 4. 下载 v2.zip 安装包
 ###############################################
-ZIP_URL="https://us.r2.7kb.me/v2.zip"
+ZIP_URL="https://raw.githubusercontent.com/networkdu/ray/refs/heads/main/v2panel1119.zip"
 ZIP_PATH="/tmp/v2.zip"
 echo "[4] 🌐 下载安装包 v2.zip ..."
 curl -fSL "$ZIP_URL" -o "$ZIP_PATH"
